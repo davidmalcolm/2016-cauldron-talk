@@ -224,6 +224,8 @@ The earlier a bug is detected, the better.
 
 * Good for our modularization efforts
 
+  * Modular tests make it easier to have modular code.
+
 .. nextslide::
    :increment:
 
