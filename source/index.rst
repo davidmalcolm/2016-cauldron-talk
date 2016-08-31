@@ -219,7 +219,7 @@ The earlier a bug is detected, the better.
 * Exercises the host code; aborts and fails the build if anything
   goes wrong.
 
-* Trivial to hack out the test suite if a test if failing
+* Trivial to hack out the test suite if a test is failing
   on a particular host.
 
 * Good for our modularization efforts
