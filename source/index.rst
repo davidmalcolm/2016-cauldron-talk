@@ -1,192 +1,27 @@
 ======================================
-Stuff Dave's been working on for GCC 7
+Testing BoF
 ======================================
 
 GNU Tools Cauldron 2016
 
 David Malcolm <dmalcolm@redhat.com>
 
-dmalcolm's work on GCC 7
-------------------------
+Topics
+------
 
-Two broad areas:
+Dave:
 
-* Usability improvements
+  * selftest framework
+  * RTL frontend (vs RTL selftests)
+  * gimple frontend (are Prasad or Richi here?)
 
-* Automated testing improvements
+Jeremy:
 
-along with a few code cleanups
+  * making test suite more independent of GCC
 
+Ed and Graham:
 
-GCC Usability Improvements
---------------------------
-
-Usability (done)
-----------------
-
-The following improvements are already in trunk, for GCC 7.
-
-(See https://gcc.gnu.org/gcc-7/changes.html )
-
-.. nextslide::
-   :increment:
-
-GCC 6's C and C++ frontends were able to offer suggestions for misspelled
-field names::
-
-  spellcheck-fields.cc:52:13: error: 'struct s' has no member named
-  'colour'; did you mean 'color'?
-     return ptr->colour;
-                 ^~~~~~
-
-GCC 7 greatly expands the scope of these suggestions. Firstly, it adds
-fix-it hints to such suggestions::
-
-  spellcheck-fields.cc:52:13: error: 'struct s' has no member named
-  'colour'; did you mean 'color'?
-     return ptr->colour;
-                 ^~~~~~
-                 color
-
-.. nextslide::
-   :increment:
-
-The suggestions now cover many other things, such as misspelled function names::
-
-  spellcheck-identifiers.c:11:3: warning: implicit declaration of function
-  'gtk_widget_showall'; did you mean 'gtk_widget_show_all'?
-  [-Wimplicit-function-declaration]
-     gtk_widget_showall (w);
-     ^~~~~~~~~~~~~~~~~~
-     gtk_widget_show_all
-
-.. nextslide::
-   :increment:
-
-misspelled macro names and enum values::
-
-  spellcheck-identifiers.cc:85:11: error: 'MAX_ITEM' undeclared here
-  (not in a function); did you mean 'MAX_ITEMS'?
-   int array[MAX_ITEM];
-             ^~~~~~~~
-             MAX_ITEMS
-
-.. nextslide::
-   :increment:
-
-misspelled type names::
-
-  spellcheck-typenames.c:7:14: error: unknown type name 'singed';
-  did you mean 'signed'?
-   void test (singed char e);
-              ^~~~~~
-              signed
-
-.. nextslide::
-   :increment:
-
-and, in the C frontend, named initializers::
-
-  test.c:7:20: error: 'struct s' has no member named 'colour';
-  did you mean 'color'?
-   struct s test = { .colour = 3 };
-                      ^~~~~~
-                      color
-
-.. nextslide::
-   :increment:
-
-The preprocessor can now offer suggestions for misspelled directives, e.g.::
-
-
-  test.c:5:2: error:invalid preprocessing directive #endfi;
-  did you mean #endif?
-   #endfi
-    ^~~~~
-    endif
-
-.. nextslide::
-   :increment:
-
-Warnings about format strings now underline the pertinent part of the string,
-and can offer suggested fixes. In some cases, the pertinent argument is
-underlined::
-
-  test.c:51:29: warning: format '%s' expects argument of type 'char *',
-  but argument 3 has type 'int' [-Wformat=]
-     printf ("foo: %d  bar: %s baz: %d", 100, i + j, 102);
-                            ~^                ~~~~~
-                            %d
-
-
-The C++ frontend will now provide fix-it hints for some missing
-semicolons::
-
-  test.cc:4:11: error: expected ';' after class definition
-   class a {}
-             ^
-             ;
-
-The idea is that IDEs and the like can hopefully auto-apply these
-fix-it hints.
-
-.. nextslide::
-   :increment:
-
-
--fdiagnostics-parseable-fixits
-------------------------------
-
-``-fdiagnostics-parseable-fixits`` allows for fix-it hints to be emitted
-in a machine-readable form, suitable for consumption by IDEs.
-
-.. nextslide::
-   :increment:
-
-Given e.g.::
-
-  spellcheck-fields.cc:52:13: error: 'struct s' has no member named
-  'colour'; did you mean 'color'?
-     return ptr->colour;
-                 ^~~~~~
-                 color
-
-it emits::
-
-  fix-it:"spellcheck-fields.cc":{52:13-52:19}:"color"
-
-(designed to be compatible with the clang option of the same name).
-
-Support in Emacs would be most welcome!  (any Emacs hackers here?)
-
-
-Usability (in progress)
------------------------
-
-The following is still in development (i.e. not yet in trunk).
-
-* dmalcolm is working on ``-fdiagnostics-generate-patch`` e.g.::
-
-    --- ../../src/gcc/testsuite/c-c++-common/Wlogical-not-parentheses-2.c
-    +++ ../../src/gcc/testsuite/c-c++-common/Wlogical-not-parentheses-2.c
-    @@ -8,7 +8,7 @@
-     {
-       int r = 0;
-    -  r += !aaa == bbb;
-    +  r += (!aaa) == bbb;
-
-* (``-fdiagnostics-apply-fixits`` was rejected: touching the user's code is
-  too risky)
-
-.. nextslide::
-   :increment:
-
-* I have a few other fix-it hints under construction.
-
-* Adding a fix-it hint to a diagnostic is a relatively easy hack,
-  maybe a good way to get involved in GCC development.
-
-    * Email dmalcolm@redhat.com if interested.
+  * parallelism ideas
 
 
 Automated testing improvements
@@ -268,9 +103,17 @@ traditional DejaGnu end-to-end approach
 
   * i.e. add *both* kinds of tests
 
+.. nextslide::
+   :increment:
 
-RTL frontend
-------------
+Questions about -fself-test:
+
+* what about post stage 1, when we transition to
+  ``--enable-checking=release`` by default
+
+
+RTL frontend -> selftests
+-------------------------
 
 * Ability to write unit tests for individual RTL passes.
 
@@ -279,3 +122,14 @@ RTL frontend
   * Likely to be very target-specific
 
 * Under development, hopefully ready by close of GCC 7 stage 1.
+
+* Rewritten to work as selftests, rather than "just" a frontend
+
+  * "[PATCH 0/9] RFC: selftests based on RTL dumps"
+
+    * https://gcc.gnu.org/ml/gcc-patches/2016-09/msg00483.html
+
+gimple frontend
+---------------
+
+(are Prasad or Richi here?)
